@@ -1,0 +1,9 @@
+connented:
+    client: "<Salamon alaikom va rahmatollahe va barakatoh!>"
+    server: "<Alaikom ossalam>" //Confirm connection
+Steps:
+    clinet:"<Rahnama!>"
+    server:"<0,0,0,0>" //LURD, Value?  close:open
+
+    cilent:"<?,?>" //<-1=left||+1=right, -1=down||+1=up>
+    server:"<Halle!>" || "<Invalid Move!>"
