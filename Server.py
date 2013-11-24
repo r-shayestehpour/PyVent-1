@@ -14,7 +14,7 @@ def DrawMap():
     mf = open("map.txt","r")
     map_list = mf.readlines()
     mf.close()
-
+    StartPoint = []
     speed(0)
     delay(0)
     up()
@@ -46,24 +46,26 @@ def DrawMap():
                 StartPoint = [i,j]    
                 #print start_point
         goto(-375, (j+1) * -15 + 225)
-    return StartPoint
+    return StartPoint, map_list
 
-StartPoint = DrawMap()
+StartPoint, map_list = DrawMap()
 
 up()
 goto (StartPoint[0] * 15 - 375, StartPoint[1] * -15 + 225)
 down()
 color('green')
 
-raw_input("Darwing done, waiting for a client to join")
+print("Darwing done, waiting for a client to join")
 
+#host = '172.17.8.83'
 host = ''
-port = 50000
+port = 50001
 backlog = 5
 size = 1024
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 s.bind((host,port))
-s.listen(backlog)
+s.listen(1)
 
 while 1:
     client, address = s.accept()
@@ -85,82 +87,98 @@ Reached = False
 
 while 1:
     data = client.recv(size)
+    print data
     if data == '<Rahnama!>':
         respond = []
-        respond.append(1 if map_list[currentPlace[1]][currentPlace[0]-1]== ' ' 
-            or map_list[currentPlace[1]][currentPlace[0]-1] == '&' else 0)
-        respond.append(1 if map_list[currentPlace[1]-1][currentPlace[0]]== ' ' 
-            or map_list[currentPlace[1]-1][currentPlace[0]] == '&' else 0)
-        respond.append(1 if map_list[currentPlace[1]-1][currentPlace[0]]== ' ' 
-            or map_list[currentPlace[1]][currentPlace[0]+1] == '&' else 0)
-        respond.append(1 if map_list[currentPlace[1]-1][currentPlace[0]]== ' ' 
-            or map_list[currentPlace[1]+1][currentPlace[0]] == '&' else 0)
+        respond.append(0 if map_list[currentPlace[1]][currentPlace[0]-1]== ' ' 
+            or map_list[currentPlace[1]][currentPlace[0]-1] == '&'
+            or map_list[currentPlace[1]][currentPlace[0]-1] == '@' else 1)
+
+        respond.append(0 if map_list[currentPlace[1]-1][currentPlace[0]]== ' ' 
+            or map_list[currentPlace[1]-1][currentPlace[0]] == '&'
+            or map_list[currentPlace[1]-1][currentPlace[0]] == '@' else 1)
+
+        respond.append(0 if map_list[currentPlace[1]][currentPlace[0]+1]== ' ' 
+            or map_list[currentPlace[1]][currentPlace[0]+1] == '&'
+            or map_list[currentPlace[1]][currentPlace[0]+1] == '@' else 1)
+
+        respond.append(0 if map_list[currentPlace[1]+1][currentPlace[0]]== ' ' 
+            or map_list[currentPlace[1]+1][currentPlace[0]] == '&' 
+            or map_list[currentPlace[1]+1][currentPlace[0]] == '@' else 1)
 
         client.send('<'+str(respond)+'>')
 
         NumRahnama += 1
         #else: s.shutdown(1)
-
-    if data == '<LEFT>':
-        if map_list[currentPlace[1]][currentPlace[0]-1]== '#':
+    else:
+        if data == '<LEFT>':
+            if map_list[currentPlace[1]][currentPlace[0]-1]== 'x':
+                client.send('<Invalid Move!>')
+                InvalidMoves += 1
+            elif map_list[currentPlace[1]][currentPlace[0]-1]== '&':
+                Reached = True
+                Moves += 1
+                client.send('<Congrats!>')
+                currentPlace[1] -= 1
+                break
+            else:
+                client.send('<Halle!>')
+                Moves += 1
+                currentPlace[0] -= 1
+                #left(180-heading())
+        if data == '<RIGHT>':
+            if map_list[currentPlace[1]][currentPlace[0]+1]== 'x':
+                client.send('<Invalid Move!>')
+                InvalidMoves += 1
+            elif map_list[currentPlace[1]][currentPlace[0]+1]== '&':
+                Reached = True
+                Moves += 1
+                client.send('<Congrats!>')
+                currentPlace[1] += 1
+                break
+            else:
+                client.send('<Halle!>')
+                Moves += 1
+                currentPlace[0] += 1
+                #left(0-heading())
+        if data == '<UP>':
+            if map_list[currentPlace[1]-1][currentPlace[0]]== 'x':
+                client.send('<Invalid Move!>')
+                InvalidMoves += 1
+            elif map_list[currentPlace[1]-1][currentPlace[0]]== '&':
+                Reached = True
+                Moves += 1
+                client.send('<Congrats!>')
+                currentPlace[0] -= 1
+                break
+            else:
+                client.send('<Halle!>')
+                Moves += 1
+                currentPlace[1] -= 1
+                #left(90-heading())
+        if data == '<DOWN>':
+            if map_list[currentPlace[1]+1][currentPlace[0]]== 'x':
+                client.send('<Invalid Move!>')
+                InvalidMoves += 1
+            elif map_list[currentPlace[1]+1][currentPlace[0]]== '&':
+                Reached = True
+                Moves += 1
+                client.send('<Congrats!>')
+                currentPlace[0] += 1
+                break
+            else:
+                client.send('<Halle!>')
+                Moves += 1
+                currentPlace[1] += 1
+                #left(270-heading())
+        else:
             client.send('<Invalid Move!>')
             InvalidMoves += 1
-        elif map_list[currentPlace[1]][currentPlace[0]-1]== '&':
-            Reached = True
-            Moves += 1
-            client.send('<Congrats!>')
-            currentPlace[0] -= 1
-            break
-        else:
-            client.send('<Halle!>')
-            Moves += 1
-            currentPlace[0] -= 1
-    if data == '<RIGHT>':
-        if map_list[currentPlace[1]][currentPlace[0]+1]== '#':
-            client.send('<Invalid Move!>')
-            InvalidMoves += 1
-        elif map_list[currentPlace[1]][currentPlace[0]+1]== '&':
-            Reached = True
-            Moves += 1
-            client.send('<Congrats!>')
-            currentPlace[0] += 1
-            break
-        else:
-            client.send('<Halle!>')
-            Moves += 1
-            currentPlace[0] += 1
-    if data == '<UP>':
-        if map_list[currentPlace[1]-1][currentPlace[0]]== '#':
-            client.send('<Invalid Move!>')
-            InvalidMoves += 1
-        elif map_list[currentPlace[1]-1][currentPlace[0]]== '&':
-            Reached = True
-            Moves += 1
-            client.send('<Congrats!>')
-            currentPlace[1] -= 1
-            break
-        else:
-            client.send('<Halle!>')
-            Moves += 1
-            currentPlace[1] -= 1
-    if data == '<DOWN>':
-        if map_list[currentPlace[1]+1][currentPlace[0]]== '#':
-            client.send('<Invalid Move!>')
-            InvalidMoves += 1
-        elif map_list[currentPlace[1]+1][currentPlace[0]]== '&':
-            Reached = True
-            Moves += 1
-            client.send('<Congrats!>')
-            currentPlace[1] += 1
-            break
-        else:
-            client.send('<Halle!>')
-            Moves += 1
-            currentPlace[1] += 1
-    begin_fill()
-    sq()    
-    end_fill()
-    goto (currentPlace[0] * 15 - 375, currentPlace[1] * -15 + 225)
+        goto (currentPlace[0] * 15 - 375, currentPlace[1] * -15 + 225)
+        begin_fill()
+        DrawSquare()    
+        end_fill()
+#    goto (currentPlace[0] * 15 - 375, currentPlace[1] * -15 + 225)
 
 s.shutdown()
 print "total moves: ", Moves
